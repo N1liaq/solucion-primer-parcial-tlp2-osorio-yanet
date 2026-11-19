@@ -20,7 +20,7 @@ export const register = async (req, res) => {
     // TODO: 1. Hashear la password antes de guardarla (hashPassword).
     const hashedPassword = await hashPassword(password);
     // TODO: 2. Crear el user y su profile asociado.
-    await sequelize.transaction(async (t) => {
+    const { user: created } = await sequelize.transaction(async (t) => {
       const newUser = await UserModel.create(
         {
           username,
@@ -30,7 +30,7 @@ export const register = async (req, res) => {
         },
         { transaction: t },
       );
-      const newProfile = await ProfileModel.create(
+      await ProfileModel.create(
         {
           employee_number,
           first_name,
@@ -43,11 +43,12 @@ export const register = async (req, res) => {
         },
       );
 
-      return { user: newUser, profile: newProfile };
+      return { user: newUser };
     });
 
-    const user = await UserModel.findByPk(newUser.id, {
+    const user = await UserModel.findByPk(created.id, {
       attributes: { exclude: ["password"] },
+      include: [{ model: ProfileModel, as: "profile" }],
     });
 
     // TODO: 3. Responder con código 201, un mensaje de éxito y devolver el usuario sin la password.
@@ -85,14 +86,14 @@ export const login = async (req, res) => {
       });
     }
     // TODO: 2. Firmar un JWT con el id y el role del user (signToken).
-    const token = signToken({ user_id: emailExist.id, role: emailExist.role });
+    const token = signToken({ id: emailExist.id, role: emailExist.role });
 
     // TODO: 3. Guardar el token en una cookie httpOnly llamada "token", responder con código 200 y un mensaje de éxito.
     res.cookie("token", token, {
       httpOnly: true,
       maxAge: 1000 * 60 * 60,
     });
-    return res.status(201).json({
+    return res.status(200).json({
       message: "Usuario logueado correctamente",
     });
     // ? Considerar qué mensaje devolver ante credenciales inválidas.

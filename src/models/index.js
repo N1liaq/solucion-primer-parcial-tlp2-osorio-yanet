@@ -20,13 +20,13 @@ ProjectModel.belongsTo(UserModel, {
 
 // TODO: 3. Definir la relación N:M entre Project y Technology con los alias technologies y projects, a través de ProjectTechnologyModel y al mismo tiempo configurar la eliminación en cascada para ambos.
 ProjectModel.belongsToMany(TechnologyModel, {
-  through: "ProjectTechnologyModel",
+  through: ProjectTechnologyModel,
   as: "technologies",
   onDelete: "CASCADE",
 });
 
 TechnologyModel.belongsToMany(ProjectModel, {
-  through: "ProjectTechnologyModel",
+  through: ProjectTechnologyModel,
   as: "projects",
   onDelete: "CASCADE",
 });
